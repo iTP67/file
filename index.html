@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="dark">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+ <title>Santander Pro</title>
+ <link href="https://cdn.jsdelivr.net/npm/tailwindcss@4.2.4/index.min.css" rel="stylesheet">
+ <link href="https://cdn.jsdelivr.net/npm/framework7@9.0.4/framework7-bundle.min.css" rel="stylesheet">
+ <style>
+   :root { --f7-theme-color: #007aff; }
+   body { background: #000; font-family: -apple-system, SF Pro Display, sans-serif; }
+   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-weight: 600; }
+   .editor-pane { background: transparent; border: none; width: 100%; height: 75vh; color: #fff; padding: 20px; font-family: 'SF Mono', monospace; font-size: 13px; outline: none; resize: none; }
+   .navbar-bg { backdrop-filter: saturate(180%) blur(25px) !important; }
+ </style>
+</head>
+<body class="dark">
+ <div id="app">
+   <div class="view view-main view-init">
+     <div class="page">
+       <!-- Navbar -->
+       <div class="navbar navbar-large">
+         <div class="navbar-bg"></div>
+         <div class="navbar-inner">
+           <div class="left">
+             <a href="#" class="link icon-only back-trigger" style="display:none">
+               <i class="icon icon-back"></i> <span class="back-text-node ml-1"></span>
+             </a>
+           </div>
+           <div class="title mono header-title">/</div>
+           <div class="right">
+             <a href="#" class="link save-trigger font-bold" style="display:none">Save</a>
+             <a href="#" class="link icon-only" @click="openTools"><i class="f7-icons">hammer_fill</i></a>
+             <a href="#" class="link icon-only"><i class="f7-icons">ellipsis_circle</i></a>
+           </div>
+           <div class="title-large"><div class="title-large-text mono header-title">/</div></div>
+         </div>
+       </div>
+
+
+       <!-- Explorer -->
+       <div class="page-content" id="view-explorer">
+         <div class="list list-inset media-list no-chevron mt-4">
+           <ul id="render-target"></ul>
+         </div>
+         <div class="block-footer text-center pb-24">
+           <p class="text-[#34c759] font-bold text-[10px] tracking-widest uppercase">Root Access • Unsandboxed</p>
+           <p id="stats-node" class="text-gray-500 text-[11px]"></p>
+         </div>
+       </div>
+
+
+       <!-- Editor -->
+       <div class="page-content" id="view-editor" style="display:none">
+         <textarea class="editor-pane" id="editor-input" spellcheck="false"></textarea>
+       </div>
+
+
+       <!-- Tabbar -->
+       <div class="toolbar toolbar-bottom tabbar-labels">
+         <div class="toolbar-inner">
+           <a href="#" onclick="navigate('/')" class="tab-link tab-link-active">
+             <img src="https://cdn-icons-png.flaticon.com/512/10629/10629681.png" width="24" class="mb-1">
+             <span class="tabbar-label">Browse</span>
+           </a>
+           <a href="#" class="tab-link">
+             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRO5Y-9TrjTLNlYy_l6tkTLXG9VmLHwJdE7WVziUrx-nSYPtoA:https://static.thenounproject.com/png/3201871-200.png&s" width="24" class="mb-1">
+             <span class="tabbar-label">Recent</span>
+           </a>
+           <a href="#" class="tab-link">
+             <img src="https://upload.wikimedia.org/wikipedia/en/thumb/2/23/System_Preferences_icon.png/250px-System_Preferences_icon.png width="24" class="mb-1">
+             <span class="tabbar-label">Settings</span>
+           </a>
+         </div>
+       </div>
+     </div>
+   </div>
+ </div>
+
+
+ <script src="https://cdn.jsdelivr.net/npm/framework7@9.0.4/framework7-bundle.min.js"></script>
+ <script>
+   const app = new Framework7({
+     el: '#app', theme: 'ios', dark: true,
+     dialog: { title: 'Error', buttonOk: 'OK' }
+   });
+
+
+   const fs = {
+     '/': [
+       { name: 'Applications', type: 'dir' }, { name: 'Developer', type: 'dir' }, { name: 'Library', type: 'dir' },
+       { name: 'System', type: 'dir' }, { name: 'User', type: 'dir' }, { name: 'bin', type: 'dir' },
+       { name: 'cores', type: 'dir' }, { name: 'dev', type: 'dir' }, { name: 'etc', type: 'dir' },
+       { name: 'private', type: 'dir' }, { name: 'sbin', type: 'dir' }, { name: 'usr', type: 'dir' },
+       { name: 'var', type: 'dir' }, { name: '.bootstrapped', type: 'file', meta: '0 B' }
+     ],
+     '/Applications': [
+       { name: 'AppStore.app', type: 'dir' }, { name: 'Calculator.app', type: 'dir' }, { name: 'Camera.app', type: 'dir' },
+       { name: 'Files.app', type: 'dir' }, { name: 'filza.app', type: 'dir' }, { name: 'Settings.app', type: 'dir' },
+       { name: 'TrollStore.app', type: 'dir' }
+     ],
+     '/bin': [{ name: 'bash', type: 'file', meta: '1.2 MB' }, { name: 'cat', type: 'file', meta: '45 KB' }, { name: 'ls', type: 'file', meta: '64 KB' }, { name: 'sh', type: 'file', meta: '1.1 MB' }],
+     '/etc': [{ name: 'fstab', type: 'txt', content: '/dev/disk0s1 / hfs ro 1 1' }, { name: 'hosts', type: 'txt', content: '127.0.0.1 localhost\n::1 localhost' }, { name: 'passwd', type: 'txt', content: 'root:*:0:0:System Administrator:/var/root:/bin/sh' }],
+     '/System/Library': [{ name: 'Caches', type: 'dir' }, { name: 'CoreServices', type: 'dir' }, { name: 'Frameworks', type: 'dir' }, { name: 'Fonts', type: 'dir' }, { name: 'Version.plist', type: 'plist', content: '<?xml version="1.0"?>\n<dict>\n  <key>ProductBuildVersion</key>\n  <string>23E214</string>\n</dict>' }],
+     '/var/mobile': [{ name: 'Containers', type: 'dir' }, { name: 'Documents', type: 'dir' }, { name: 'Library', type: 'dir' }, { name: 'Media', type: 'dir' }],
+     '/var/mobile/Library/Preferences': [
+       { name: 'com.apple.SpringBoard.plist', type: 'plist', content: '<dict>\n  <key>SBShowBatteryPercentage</key>\n  <true/>\n</dict>' },
+       { name: 'com.apple.UIKit.plist', type: 'plist', content: '<dict>\n  <key>UIInterfaceStyle</key>\n  <string>Dark</string>\n</dict>' }
+     ],
+     '/var/mobile/Containers/Data/Application': [
+       { name: '4F9A-B2C1-D3E4 (Safari)', type: 'dir' }, { name: '8E7D-C6B5-A493 (Discord)', type: 'dir' }, { name: '99A1-BB22-CC33 (Instagram)', type: 'dir' }
+     ],
+     '/var/mobile/Media': [{ name: 'DCIM', type: 'dir' }, { name: 'Downloads', type: 'dir' }, { name: 'PhotoData', type: 'dir' }, { name: 'Recordings', type: 'dir' }]
+   };
+
+
+   // Auto-stub unmapped folders
+   ['/Developer', '/Library', '/User', '/cores', '/dev', '/private', '/sbin', '/usr', '/var/containers', '/var/mobile/Documents', '/System/Library/Fonts'].forEach(p => { if(!fs[p]) fs[p] = [{name: '..', type: 'dir'}]; });
+
+
+   let currentPath = '/';
+
+
+   function render(path) {
+     const items = fs[path] || [];
+     document.getElementById('view-explorer').style.display = 'block';
+     document.getElementById('view-editor').style.display = 'none';
+     document.querySelector('.save-trigger').style.display = 'none';
+     const parts = path.split('/').filter(Boolean);
+     const title = parts.length ? parts[parts.length - 1] : '/';
+     document.querySelectorAll('.header-title').forEach(el => el.innerText = title);
+     const backBtn = document.querySelector('.back-trigger');
+     if (path !== '/') {
+       backBtn.style.display = 'flex';
+       document.querySelector('.back-text-node').innerText = parts.length > 1 ? parts[parts.length - 2] : '/';
+     } else { backBtn.style.display = 'none'; }
+     document.getElementById('render-target').innerHTML = items.map(item => `
+       <li>
+         <a href="#" onclick="handleSelect('${path === '/' ? '' : path}/${item.name}')" class="item-link item-content">
+           <div class="item-media"><img src="${getIcon(item.type)}" width="30"></div>
+           <div class="item-inner">
+             <div class="item-title-row">
+               <div class="item-title text-[17px]">${item.name}</div>
+               <div class="item-after">${item.type === 'dir' ? '<i class="f7-icons text-gray-500 text-[14px]">chevron_right</i>' : '<i class="f7-icons text-blue-500 text-[20px]">info_circle</i>'}</div>
+             </div>
+             <div class="item-subtitle text-[12px] opacity-50">${item.type === 'dir' ? 'Folder' : (item.meta || 'Configuration')}</div>
+           </div>
+         </a>
+       </li>
+     `).join('');
+   }
+
+
+   function getIcon(t) {
+     if (t === 'dir') return 'https://cdn.creazilla.com/icons/3234388/folder-icon-lg.png';
+     if (t === 'plist') return 'https://cdn.creazilla.com/icons/3234388/folder-icon-lg.png';
+     return 'https://cdn.creazilla.com/icons/3234388/folder-icon-lg.png';
+   }
+
+
+   window.handleSelect = (path) => {
+     const parts = path.split('/');
+     const name = parts.pop();
+     const parent = parts.join('/') || '/';
+     const file = fs[parent]?.find(f => f.name === name);
+     if (file && file.type !== 'dir') {
+       document.getElementById('view-explorer').style.display = 'none';
+       document.getElementById('view-editor').style.display = 'block';
+       document.querySelector('.save-trigger').style.display = 'flex';
+       document.getElementById('editor-input').value = file.content || '';
+       document.querySelectorAll('.header-title').forEach(el => el.innerText = file.name);
+     } else navigate(path);
+   };
+
+
+   window.navigate = (p) => { if (fs[p]) { currentPath = p; render(p); } else app.dialog.alert('access denied, exploit again.'); };
+   window.openTools = () => {
+     app.actions.create({
+       buttons: [
+         [{ text: 'Developer Tools', label: true }, { text: 'Respring', color: 'red', onClick: () => app.dialog.preloader('Respringing...') }, { text: 'Rebuild Icon Cache', onClick: () => app.dialog.preloader('Rebuilding...') }],
+         [{ text: 'Cancel', color: 'red' }]
+       ]
+     }).open();
+   };
+
+
+   document.querySelector('.save-trigger').onclick = () => app.toast.create({ text: 'File Saved', closeTimeout: 2000, position: 'center' }).open();
+   document.querySelector('.back-trigger').onclick = () => {
+     if (document.getElementById('view-editor').style.display === 'block') render(currentPath);
+     else {
+       const parts = currentPath.split('/').filter(Boolean);
+       parts.pop();
+       currentPath = '/' + parts.join('/');
+       render(currentPath);
+     }
+   };
+   render('/');
+ </script>
+</body>
+</html>
+
+
+
+
+
